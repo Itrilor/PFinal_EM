@@ -1,0 +1,283 @@
+---
+title: "Práctica Final"
+author: 
+  - "© Gerardo Tirado García"
+  - "© Irene Trigueros Lorca"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: no
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
+  pdf_document: default
+---
+<style>
+.math{
+  font-size: 8.25pt;options(encoding = 'UTF-8')
+}
+</style>  
+
+<div style="text-align: justify">
+---
+En esta práctica vamos a realizar un análisis exploratorio (tanto univariante como multivariante) de una de las bases de datos propuestas. 
+En nuestro caso, elegiremos la base de datos 3: En el conjunto constituido por 34 estados del mundo, se han observado 11 variables cuyos resultados se recogen en el archivo DB_3.sav. 
+Estas variables ya se encuentran estandarizadas, pues están tomadas con unidades de medida muy diferentes. 
+Estas variables son:
+
+* Ztlibrop: Número de libros publicados
+* Ztejerci: Cociente entre el número de individuos en ejército de tierra y población total del estado.
+* Ztpobact: Cociente entre población activa y total.
+* Ztenergi: Tasa de consumo energético.
+* Zpservi: Población del sector servicios. 
+* Zpagricu: Población del sector agrícola.
+* Ztmedico: Tasa de médicos por habitante. 
+* Zespvida: Esperanza de vida. 
+* Ztminfan: Tasa de mortalidad infantil.
+* Zpobdens: Densidad de población.
+
+# **Instalación y carga de librerías**
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+# Instalamos las librerías a utilizar si no están ya instaladas
+#install.packages("psych")
+#install.packages("polycor")
+#install.packages("ggcorrplot")
+#install.packages("corrr")
+#install.packages("moments") #skewness
+#install.packages("dplyr") #Test de Saphiro-Wilk
+#Cargamos las librerías que vamos a utilizar
+library(psych)
+library(polycor)
+library(ggcorrplot)
+library(corrplot)
+library(corrr)
+library(moments)
+library(foreign)
+library(reshape2)
+library(knitr)
+library(dplyr)
+```
+
+Cargamos los datos de la base de datos mencionados anteriormente:
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos_original<-read.spss("DB_3.sav", to.data.frame = TRUE)
+```
+
+# **Análisis exploratorio univariante**
+
+## *Recodificaciones o agrupaciones de datos*
+
+En primer lugar, eliminamos la primera columna, que representa a los países, ya 
+que no nos sirven:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos<-datos_original[,-1]
+```
+
+## *Valores perdidos*
+
+Definimos la función que nos permite identificar el porcentaje de valores perdidos
+de cada variable:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+per_not_available<-function(data, na.rm=F){
+  colMeans(is.na(data))*100
+}
+per_not_available(datos)
+```
+
+Podemos observar que ninguna variable tiene valores perdidos, excepto `ZTLIBROP`,
+con un 2.941176% de valores perdidos (lo que se corresponde en un solo valor 
+perdido).
+
+Como en este paso solo tenemos que tratar con las variables que tengan más de 
+un 5% de valores perdidos, y no tenemos ningún caso en el que esto pase, 
+no hay más que hacer. 
+Sin embargo, la mayor parte del análisis que tenemos que hacer requiere de que 
+no haya valores perdidos (por ejemplo, para la correlación si hay valores 
+perdidos, las filas y las columnas de las variables con  valores perdidos se 
+llenarán de `NA`); por lo tanto, trataremos con estos valores ahora sustituyéndolos 
+por la media de la variable:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+not_available<-function(data,na.rm=F){
+  data[is.na(data)]<-mean(data,na.rm=T)
+  data
+}
+datos$ZTLIBROP<-not_available(datos$ZTLIBROP)
+```
+
+## *Análisis descriptivo numérico clásico*
+
+Podemos observar los siguientes valores característicos:
+
+* Mínimo
+* Primer cuartil
+* Mediana
+* Media
+* Tercer cuartil
+* Máximo
+
+de cada variable utilizando la función `summary`:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+summary(datos)
+```
+
+Podemos comprobar la simetría de cada variable utilizando la función `skewness`:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+skewness(datos) #https://www.programmingr.com/statistics/skewness/ 
+```
+
+Sabemos que si la media se encuentra a la derecha de la mediana, obtendremos un 
+skewness positivo; en caso contrario, obtendremos un skewness negativo.
+
+Podemos comprobar gráficamente la simetría de las variables utilizando: 
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+hist(x = datos$ZTLIBROP)
+hist(x = datos$ZTEJERCI)
+hist(x = datos$ZTPOBACT)
+hist(x = datos$ZTENERGI)
+hist(x = datos$ZPSERVI)
+hist(x = datos$ZPAGRICU)
+hist(x = datos$ZTMEDICO)
+hist(x = datos$ZESPVIDA)
+hist(x = datos$ZTMINFAN)
+hist(x = datos$ZPOBDENS)
+hist(x = datos$ZPOBURB)
+```
+
+La curtosis mide cómo de achatada o apuntada es la curva y cómo se agrupan 
+valores en torno a la media (la curtosis de una distribución normal es 3):
+
+* La curtosis de una distribución normal es 3.
+* Si una distribución dada tiene una curtosis menor que 3, se dice que es *playkurtic*, lo que significa que tiende a producir menos valores atípicos y menos extremos que la distribución normal.
+* Si una distrubicón dada tiene una curtosis mayor que 3, se dice que es *leptocúrtica*, lo que significa que tiende a producir más valores atípicos que la distribución normal.
+
+Se puede calcular utilizando la función `kurtosis`:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+kurtosis(datos) #https://statologos.com/asimetria-curtosis-en-r/
+```
+
+## *Valores extremos (outliers)*
+
+El objetivo es el de localizar outliers que puedan dar lugar a resultados
+erróneos ya que el ACP es muy sensible a valores extremos. Un diagrama de 
+cajas puede dar esta primera información:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+boxplot(datos,main="Análisis de outliers",
+        xlab="Variables sociodemográficas",
+        ylab="z-values",
+        col=c(1:11))
+```
+
+Al obtener el gráfico con estos datos, se observa que tanto `ZOPBENDS`, 
+`ZJEJERCI` y `ZTENERGI` presentan outliers.
+
+Los outliers deben ser tratados de forma independiente por el investigador, de 
+modo que para el APC es necesario eliminarlos. 
+La función outlier definida como sigue elimina los outliers sustituyéndolos por....
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+outlier<-function(data,na.rm=T){
+  H<-1.5*IQR(data)
+  data[data<quantile(data,0.25,na.rm = T)-H]<-NA
+  data[data>quantile(data,0.75, na.rm = T)+H]<-NA
+  data[is.na(data)]<-mean(data, na.rm = T)
+  H<-1.5*IQR(data)
+  if (TRUE %in% (data<quantile(data,0.25,na.rm = T)-H) | TRUE %in% (data>quantile(data,0.75,na.rm = T)+H))
+    outlier(data)
+  else
+    return(data)
+}
+```
+
+Entonces aplicamos esta función a las variables donde hemos encontrado outliers:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos$ZPOBDENS <- outlier(datos$ZPOBDENS)
+datos$ZTENERGI <- outlier(datos$ZTENERGI)
+datos$ZTEJERCI <- outlier(datos$ZTEJERCI)
+```
+
+Y volvemos a mostrar el diagrama de cajas con estos nuevos cambios: 
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+boxplot(datos,main="Análisis de outliers",
+        xlab="Variables sociodemográficas",
+        ylab="z-values",
+        col=c(1:11))
+```
+
+Al obtener el gráfico con estos datos, se observa que ya ninguna variable 
+presenta outliers.
+
+## *Supuesto de normalidad*
+
+### Normalidad con gráficas qqplot
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+qqnorm(datos$ZTLIBROP, main="ZTLIBROP", pch=1, frame = FALSE)
+qqline(datos$ZTLIBROP, col = 'blue', lwd=2)
+qqnorm(datos$ZTEJERCI, main="ZTEJERCI", pch=1, frame = FALSE)
+qqline(datos$ZTEJERCI, col = 'blue', lwd=2)
+qqnorm(datos$ZTPOBACT, main="ZTPOBACT", pch=1, frame = FALSE)
+qqline(datos$ZTPOBACT, col = 'blue', lwd=2)
+qqnorm(datos$ZTENERGI, main="ZTENERGI", pch=1, frame = FALSE)
+qqline(datos$ZTENERGI, col = 'blue', lwd=2)
+qqnorm(datos$ZPSERVI, main="ZPSERVI", pch=1, frame = FALSE)
+qqline(datos$ZPSERVI, col = 'blue', lwd=2)
+qqnorm(datos$ZPAGRICU, main="ZPAGRICU", pch=1, frame = FALSE)
+qqline(datos$ZPAGRICU, col = 'blue', lwd=2)
+qqnorm(datos$ZTMEDICO, main="ZTMEDICO", pch=1, frame = FALSE)
+qqline(datos$ZTMEDICO, col = 'blue', lwd=2)
+qqnorm(datos$ZESPVIDA, main="ZESPVIDA", pch=1, frame = FALSE)
+qqline(datos$ZESPVIDA, col = 'blue', lwd=2)
+qqnorm(datos$ZTMINFAN, main="ZTMINFAN", pch=1, frame = FALSE)
+qqline(datos$ZTMINFAN, col = 'blue', lwd=2)
+qqnorm(datos$ZPOBDENS, main="ZPOBDENS", pch=1, frame = FALSE)
+qqline(datos$ZPOBDENS, col = 'blue', lwd=2)
+qqnorm(datos$ZPOBURB, main="ZPOBURB", pch=1, frame = FALSE)
+qqline(datos$ZPOBURB, col = 'blue', lwd=2)
+```
+
+### Test de Saphiro-Wilk
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos_tidy <- melt(datos, value.name = "valor")
+aggregate(valor ~ variable, data = datos_tidy,
+          FUN = function(x){shapiro.test(x)$p.value})
+#x>0.05 -> ZPOBURB, ZPSERVI, ZTEJERCI, ZTPOBACT 
+qqnorm(datos$ZPOBURB, pch=1, frame = FALSE)
+qqline(datos$ZPOBURB, col = 'blue', lwd=2)
+```
+
+## *Otras cuestiones de interés*
+
+# **Análisis exploratorio multivariante**
+
+## *Correlación*
+
+## *Valores perdidos*
+
+## *Posibilidad de reducción de la dimensión*
+
+### *Mediante variables observables*
+
+### *Mediante variables latentes*
+
+## *Análisis de normalidad*
+
+## *Construcción de un clasificador*
+
+## *Validación de los clasificadores*
