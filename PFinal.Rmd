@@ -494,6 +494,72 @@ head(PCA$x,n=4)
   
 
 ### *Mediante variables latentes*
+  
+                                       
+```{r echo=TRUE, include=TRUE, warning=FALSE}                     
+ #AF                                         
+                                          
+library(polycor)
+
+poly_cor<-hetcor(datos)$correlations
+
+# Hay que escoger un m?todo para extraer los factores, ACP, verosimilitud, etc.
+# La funci?n fa() implementa hasta 6 m?todos distintos
+# Vamos a comparar las salidas con el m?todo del factor principal y con el de 
+# m?xima verosimilitud.
+
+### prueba de dos modelos con tres factores
+modelo1<-fa(poly_cor,
+            nfactors = 4,
+            rotate = "none",
+            fm="mle") # modelo m?xima verosimilitud
+
+modelo2<-fa(poly_cor,
+            nfactors = 4,
+            rotate = "none",
+            fm="minres") # modelo m?nimo residuo
+# comparando las comunalidades
+sort(modelo1$communality,decreasing = T)->c1
+sort(modelo2$communality,decreasing = T)->c2
+head(cbind(c1,c2))
+
+# comparacion de las unicidades, es decir la proporción de varianza
+# que no ha sido explicada por el factor (1-comunalidad)
+sort(modelo1$uniquenesses,decreasing = T)->u1
+sort(modelo2$uniquenesses,decreasing = T)->u2
+head(cbind(u1,u2))
+
+# Determinemos ahora el n?mero ?ptimo de factores
+# Hay diferentes criterios, entre los que destacan el Scree plot (Cattel 1966)
+# y el an?lisis paralelo (Horn 1965). Ejercicio: buscar sus interpretaciones
+scree(poly_cor)
+fa.parallel(poly_cor,n.obs=200,fa="fa",fm="minres")
+
+
+# Estimamos el modelo factorial con 5 factores implementando una rotaci?n
+# tipo varimax para buscar una interpretaci?n m?s simple.
+modelo_varimax<-fa(poly_cor,nfactors = 2,rotate = "varimax",
+                   fa="mle")
+
+# Mostramos la matriz de pesos factorial rotada
+print(modelo_varimax$loadings,cut=0) 
+# Visualmente podr?amos hacer el esfuerzo de ver con qu? variables correlacionan cada 
+# uno de los factores, pero es muy tedioso de modo que utilizamos la siguiente
+# representaci?n
+fa.diagram(modelo_varimax)
+# En este diagrama, entre otras cosas se ve que el primer factor esta asociado 
+# con los items E1, E2, E3, E4, E5 y N4, que son los items del cuestioario que 
+# tratan de identificar la cualidad de la extraversi?n
+
+
+
+# ----------------------------------------------------
+# Otra forma de hacerlo, con test de hip?tesis al final
+# que contrasta si el numero de factores es suficiente 
+library(stats)
+factanal(datos,factors=4, rotation="none")
+
+```
 
 ## *Análisis de normalidad*
 
