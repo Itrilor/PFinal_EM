@@ -51,6 +51,7 @@ Estas variables son:
 #install.packages("corrr")
 #install.packages("moments") #skewness
 #install.packages("dplyr") #Test de Saphiro-Wilk
+#install.packages("factoextra")
 #Cargamos las librerías que vamos a utilizar
 library(psych)
 library(polycor)
@@ -62,6 +63,9 @@ library(foreign)
 library(reshape2)
 library(knitr)
 library(dplyr)
+library(ggplot2)
+library("factoextra")
+library(stats)
 ```
 
 Cargamos los datos de la base de datos mencionados anteriormente:
@@ -445,70 +449,75 @@ head(PCA$x,n=4)
 
 ### *Mediante variables latentes*
   
-                                       
-```{r echo=TRUE, include=TRUE, warning=FALSE}                     
- #AF                                         
-                                          
-library(polycor)
-
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 poly_cor<-hetcor(datos)$correlations
+```
 
-# Hay que escoger un m?todo para extraer los factores, ACP, verosimilitud, etc.
-# La funci?n fa() implementa hasta 6 m?todos distintos
-# Vamos a comparar las salidas con el m?todo del factor principal y con el de 
-# m?xima verosimilitud.
+Hay que escoger un método para extraer los factores, ACP, verosimilitud, etc. 
+La función `fa()` implementa hasta 6 métodos distintos. 
+Vamos a comprarar las salidas con el método del factor principal y con el de máxima verosimilitud.
 
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 ### prueba de dos modelos con tres factores
 modelo1<-fa(poly_cor,
             nfactors = 4,
             rotate = "none",
             fm="mle") # modelo m?xima verosimilitud
-
 modelo2<-fa(poly_cor,
             nfactors = 4,
             rotate = "none",
             fm="minres") # modelo m?nimo residuo
-# comparando las comunalidades
+```
+
+Comparamos las comunalidades:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 sort(modelo1$communality,decreasing = T)->c1
 sort(modelo2$communality,decreasing = T)->c2
 head(cbind(c1,c2))
+```
 
-# comparacion de las unicidades, es decir la proporción de varianza
-# que no ha sido explicada por el factor (1-comunalidad)
+Comparamos las unicidades, es decir, la proporción de varianza que no ha sido explicada por el factor (1-comunalidad)
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 sort(modelo1$uniquenesses,decreasing = T)->u1
 sort(modelo2$uniquenesses,decreasing = T)->u2
 head(cbind(u1,u2))
+```
 
-# Determinemos ahora el n?mero ?ptimo de factores
-# Hay diferentes criterios, entre los que destacan el Scree plot (Cattel 1966)
-# y el an?lisis paralelo (Horn 1965). Ejercicio: buscar sus interpretaciones
+Determinemos ahora el número óptimo de factores. 
+Hay diferentes criterios, entre los que destacan el Scree plot y el análisis paralelo:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 scree(poly_cor)
 fa.parallel(poly_cor,n.obs=200,fa="fa",fm="minres")
+```
 
+Estimamos el modelo factorial con 4 factores implementando una rotación tipo varimax para buscar una interpretación más simple:
 
-# Estimamos el modelo factorial con 5 factores implementando una rotaci?n
-# tipo varimax para buscar una interpretaci?n m?s simple.
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 modelo_varimax<-fa(poly_cor,nfactors = 2,rotate = "varimax",
                    fa="mle")
+```
 
-# Mostramos la matriz de pesos factorial rotada
+Mostramos la mariz de pesos factorial rotada:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 print(modelo_varimax$loadings,cut=0) 
-# Visualmente podr?amos hacer el esfuerzo de ver con qu? variables correlacionan cada 
-# uno de los factores, pero es muy tedioso de modo que utilizamos la siguiente
-# representaci?n
+```
+
+Visualmente podríamos hacer el esfuerzo de  ver con qué variables correlacionan cada uno de los factores, pero es muy tedioso; de modo que utilizamos la siguiente representación:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 fa.diagram(modelo_varimax)
-# En este diagrama, entre otras cosas se ve que el primer factor esta asociado 
-# con los items E1, E2, E3, E4, E5 y N4, que son los items del cuestioario que 
-# tratan de identificar la cualidad de la extraversi?n
+```
 
+En este diagrama, entre otras cosas, se ve que el primer factor está asociado con los items `ZPAGRICU`, `ZPOBURB`, `ZPSERVI`, `ZESPVIDA`, `ZTMINFAN`, `ZTLIBROP`, `ZTMEDICO`, `ZTENERGI`; mientras que el segundo factor está asociado solo al item `ZTPOPBACT`.
 
+Otra forma de hacerlo es con un test de hipótesis al final que contrasta si el número de factores es suficiente:
 
-# ----------------------------------------------------
-# Otra forma de hacerlo, con test de hip?tesis al final
-# que contrasta si el numero de factores es suficiente 
-library(stats)
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 factanal(datos,factors=4, rotation="none")
-
 ```
 
 ## *Análisis de normalidad*
