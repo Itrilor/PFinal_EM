@@ -562,6 +562,21 @@ factanal(datos,factors=4, rotation="none")
 ```
 
 ## *Análisis de normalidad*
+                                     
+```{r echo=TRUE, include=TRUE, warning=FALSE}                                        
+# El paquete solo se instala una vez para evitar errores de ejecución puesto que está en nuestro repositorio local.
+install.packages("MVN")
+library(MVN)
+outliers <- mvn(data = datos, mvnTest = "hz", multivariateOutlierMethod = "quan")
+
+royston_test <- mvn(data = datos[,-1], mvnTest = "royston", multivariatePlot = "qq")
+royston_test$multivariateNormality
+
+hz_test <- mvn(data = datos, mvnTest = "hz")
+hz_test$multivariateNormality
+  
+ ```
+                                     
 
 ## *Construcción de un clasificador*
 
