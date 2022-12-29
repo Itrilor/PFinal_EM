@@ -52,6 +52,7 @@ Estas variables son:
 #install.packages("moments") #skewness
 #install.packages("dplyr") #Test de Saphiro-Wilk
 #install.packages("factoextra")
+#install.packages("MVN")
 #Cargamos las librerías que vamos a utilizar
 library(psych)
 library(polycor)
@@ -66,6 +67,7 @@ library(dplyr)
 library(ggplot2)
 library("factoextra")
 library(stats)
+library(MVN)
 ```
 
 Cargamos los datos de la base de datos mencionados anteriormente:
@@ -522,19 +524,28 @@ factanal(datos,factors=4, rotation="none")
 
 ## *Análisis de normalidad*
                                      
-```{r echo=TRUE, include=TRUE, warning=FALSE}                                        
-# El paquete solo se instala una vez para evitar errores de ejecución puesto que está en nuestro repositorio local.
-install.packages("MVN")
-library(MVN)
-outliers <- mvn(data = datos, mvnTest = "hz", multivariateOutlierMethod = "quan")
+Utilizaremos el **test de normalidad multivariante (Mardia, Henze-Zikler y Royston)**. 
+El paquete `MVN` contiene funciones que permiten realizar los tres test que se utilizan habitualmente para contrastar la normalidad multivariante. 
+Esta normalidad multivariante puede verse afectada por la presencia de outliers. 
+En este paquete también encontraremos funciones para el análisis de outliers.
 
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+outliers <- mvn(data = datos, mvnTest = "hz", multivariateOutlierMethod = "quan")
+```
+
+Se detectan 11 outliers en las observaciones 1, 4, 6, 7, 15, 19, 20, 21, 28, 29 y 33. 
+Por otra parte, al realizar los dos test siguientes obtenemos que:
+
+* El test de Royston: Encuentra evidencias al 5% de significación de falta de normalidad multivariante.
+* El test de Henze-Zierkler: No encuentra evidencias al 5% de significación de falta de normalidad multivariante.
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 royston_test <- mvn(data = datos[,-1], mvnTest = "royston", multivariatePlot = "qq")
 royston_test$multivariateNormality
-
 hz_test <- mvn(data = datos, mvnTest = "hz")
 hz_test$multivariateNormality
-  
- ```
+```
                                      
 
 ## *Construcción de un clasificador*
