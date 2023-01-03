@@ -549,5 +549,33 @@ hz_test$multivariateNormality
                                      
 
 ## *Construcción de un clasificador*
+  
+ Clasificador lineal  
+  
+  ```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos_i<-read.csv("DatosBD3Listos.csv")
+
+modelo_lda <- lda(formula = PAIS ~ ZESPVIDA + ZPOBDENS + ZPOBURB + ZTMEDICO + ZTMINFAN + ZPAGRICU + ZPSERVI + ZTLIBROP + ZTEJERCI + ZTPOBACT + ZTENERGI, data = datos_i)
+modelo_lda
+```
+  
+  
+ 
 
 ## *Validación de los clasificadores*
+  Validación clasificador lineal
+  
+    ```{r echo=TRUE, include=TRUE, warning=FALSE}
+nuevas_observaciones <- data.frame(ZESPVIDA=-1.2, ZPOBDENS=-0.5, ZPOBURB=-0.56, ZTMEDICO= -0.51, ZTMINFAN=0.52, ZPAGRICU=-0.04, ZPSERVI=0.24, ZTLIBROP=-0.14, ZTEJERCI=0.54, ZTPOBACT=0.33, ZTENERGI=-0.1)
+predict(object = modelo_lda, newdata = nuevas_observaciones)
+
+pred <- predict(modelo_lda, dimen = 1)
+
+library(biotools)
+confusionmatrix(datos_i$PAIS, pred$class)
+
+# Porcentaje de errores de clasificación
+trainig_error <- mean(datos_i$PAIS != pred$class) * 100
+paste("trainig_error=", trainig_error, "%")
+```
+  
