@@ -53,6 +53,7 @@ Estas variables son:
 #install.packages("dplyr") #Test de Saphiro-Wilk
 #install.packages("factoextra")
 #install.packages("MVN")
+#install.packages("biotools")
 #Cargamos las librerías que vamos a utilizar
 library(psych)
 library(polycor)
@@ -68,6 +69,7 @@ library(ggplot2)
 library("factoextra")
 library(stats)
 library(MVN)
+library(biotools)
 ```
 
 Cargamos los datos de la base de datos mencionados anteriormente:
@@ -298,21 +300,21 @@ Ya han sido tratados en el apartado del análisis univariante.
 Es conveniente elegir el número óptimo de componentes principales. 
 El siguiente código fuente realiza el ACP, obteniendo los vectores propios que generan cada componente, así como sus valores propios que corresponden a la varianza de cada una. 
 
-La función "prcomp" del paquete base de R realiza este análisis. 
-Pasamos los parámetros "scale" y "center" a `TRUE` para considerar los datos originales normalizados:
+La función `prcomp` del paquete base de R realiza este análisis. 
+Pasamos los parámetros `scale` y `center` a `TRUE` para considerar los datos originales normalizados:
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 # Realización del ACP
 PCA<-prcomp(datos, scale=T, center = T)
 ```
 
-El campo "rotation" del objeto "PCA" es una matriz cuyas columnas son los coeficientes de las componentes principales, es decir, el peso de cada variable en la correspondiente componente principal.
+El campo `rotation` del objeto `PCA` es una matriz cuyas columnas son los coeficientes de las componentes principales, es decir, el peso de cada variable en la correspondiente componente principal.
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 PCA$rotation
 ```
 
-En el campo "sdev" del objeto "PCA" y con la función summary aplicada al objeto, obtenemos información relevante: desviaciones típicas de cada componente principal, proporción de varianza explicada y acumulada:
+En el campo `sdev` del objeto `PCA` y con la función summary aplicada al objeto, obtenemos información relevante: desviaciones típicas de cada componente principal, proporción de varianza explicada y acumulada:
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 PCA$sdev
@@ -450,7 +452,7 @@ head(PCA$x,n=4)
 ```
 
 ### *Mediante variables latentes*
-  
+
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 poly_cor<-hetcor(datos)$correlations
 ```
@@ -523,7 +525,7 @@ factanal(datos,factors=4, rotation="none")
 ```
 
 ## *Análisis de normalidad*
-                                     
+
 Utilizaremos el **test de normalidad multivariante (Mardia, Henze-Zikler y Royston)**. 
 El paquete `MVN` contiene funciones que permiten realizar los tres test que se utilizan habitualmente para contrastar la normalidad multivariante. 
 Esta normalidad multivariante puede verse afectada por la presencia de outliers. 
@@ -546,36 +548,86 @@ royston_test$multivariateNormality
 hz_test <- mvn(data = datos, mvnTest = "hz")
 hz_test$multivariateNormality
 ```
-                                     
 
 ## *Construcción de un clasificador*
-  
- Clasificador lineal  
-  
-  ```{r echo=TRUE, include=TRUE, warning=FALSE}
-datos_i<-read.csv("DatosBD3Listos.csv")
 
+Para poder construir un clasificador, primero tenemos que introducirle
+
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+datos_i<-read.csv("DatosBD3Listos.csv")
+```
+
+
+### Caso lineal
+
+Cuando se emplean **múltiples predictores**, se tiene que contrastar que la matriz de covarianzas es constante en todos los grupos. 
+en este caso es también recomendable comprobar la homogeneidad de la varianza para cada predictor a nivel individual. 
+El test más recomendable es el **test de Box M**, que es una extensión del de Barttlet para escenarios multivariantes. 
+Hay que tener en cuenta que es muy sensible a que lso datos efectivamente se distribuyan según una normal multivariante. 
+Por este motivo se recomienda utilizar una significación (p-value)<0.001.
+
+Mientras tanto, cuando hay un **solo predictor**, el test más recomendable es el **test de Barttlet**, ya utilizado anteriormente.
+
+La hipótesis nula a contrastar es la de igualdad de matrices de covarianzas en todos los grupos:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+cortest.bartlett(datos_i[,2:12])
+```
+
+En este caso, rechazamos la hipótesis nula, ya que el p-value resultante es menor a 0.001 y por tanto, asumimos la no homogeneidad de varianzas. 
+Es importante recordar que para que esta conclusión sea fiable, debe darse el supuesto de normalidad multivariante.
+
+Una vez hecho esto, calculamos la función discrimintante. 
+La función `lda` del paquete `MASS` realiza la clasificación:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 modelo_lda <- lda(formula = PAIS ~ ZESPVIDA + ZPOBDENS + ZPOBURB + ZTMEDICO + ZTMINFAN + ZPAGRICU + ZPSERVI + ZTLIBROP + ZTEJERCI + ZTPOBACT + ZTENERGI, data = datos_i)
 modelo_lda
 ```
-  
-  
- 
+
+La salida de este objeto, nos muestra las **probabilidades a priori** de cada grupo, en este caso 0.02941176 para cada país (1/34), las **medias de cada regresor por grupo** y los **coeficientes del modelo de clasificación discriminante lineal**, que en este caso tendría la forma:
+
+\begin{align}
+LD1 & = -3.1612867\times ZESPVIDA - 0.8617174 \times ZPOBDENS + 0.2152631\times ZPOBURB - 4.1192290 \times ZTMEDICO \\
+&+ 18.9828752  \times ZTMINFAN + 1.6527333 \times ZPAGRICU - 1.2191577 \times ZPSERVI - 1.9482100 \times ZTLIBROP \\
+&+ 0.2774037 \times ZTEJERCI - 4.8002149 \times ZTPOBACT - 4.5633318 \times ZTENERGI 
+\end{align}
+
+Y lo mismo con el resto de discriminantes lineales. 
+
+La `proportion of trace` que imprime también es el porcentaje de separación conseguido por cada función discriminante. 
+
+### Caso cuadrático
 
 ## *Validación de los clasificadores*
-  Validación clasificador lineal
-  
-    ```{r echo=TRUE, include=TRUE, warning=FALSE}
-nuevas_observaciones <- data.frame(ZESPVIDA=-1.2, ZPOBDENS=-0.5, ZPOBURB=-0.56, ZTMEDICO= -0.51, ZTMINFAN=0.52, ZPAGRICU=-0.04, ZPSERVI=0.24, ZTLIBROP=-0.14, ZTEJERCI=0.54, ZTPOBACT=0.33, ZTENERGI=-0.1)
-predict(object = modelo_lda, newdata = nuevas_observaciones)
 
+Una vez construido el clasificador podemos clasficiar nuevos datos en función de sus medidas sin más que llamar a la función `predict`.
+
+
+### Validación del clasificador lineal
+
+Introducimos una nueva observación para comprobar cómo la clasifica:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
+nuevas_observaciones <- data.frame(ZESPVIDA=0.2, ZPOBDENS=0.35, ZPOBURB=0.36, ZTMEDICO= -0.81, ZTMINFAN=-1.82, ZPAGRICU=-1.04, ZPSERVI=0.04, ZTLIBROP=-0.14, ZTEJERCI=0.54, ZTPOBACT=0.43, ZTENERGI=-0.1)
+predict(object = modelo_lda, newdata = nuevas_observaciones)
+```
+Según la función discriminante, la probabilidad a posteriori de que el la observación sea sobre el país `Francia` es el 100%. 
+Por tanto esta observación, será clasificada como parte del país `Francia`
+
+La función `confusionmatrix` del paquete `biotools` realiza una validación cruzada del modelo de clasificación:
+
+```{r echo=TRUE, include=TRUE, warning=FALSE}
 pred <- predict(modelo_lda, dimen = 1)
 
-library(biotools)
 confusionmatrix(datos_i$PAIS, pred$class)
-
 # Porcentaje de errores de clasificación
-trainig_error <- mean(datos_i$PAIS != pred$class) * 100
-paste("trainig_error=", trainig_error, "%")
+training_error <- mean(datos_i$PAIS != pred$class) * 100
+paste("trainig_error=", training_error, "%")
 ```
-  
+
+En este caso, el porcentaje de aciertos es del 78.4313725490196%
+
+### Validación del clasificador cuadrático
+
