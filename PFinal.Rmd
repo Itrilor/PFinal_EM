@@ -577,6 +577,12 @@ cortest.bartlett(datos_i[,2:12])
 
 En este caso, rechazamos la hipótesis nula, ya que el p-value resultante es menor a 0.001 y por tanto, asumimos la no homogeneidad de varianzas. 
 Es importante recordar que para que esta conclusión sea fiable, debe darse el supuesto de normalidad multivariante.
+  
+Debido a que solo hay 34 filas y cada fila hace referencia a un país distinto no se pudo realizar el análisis discriminante lineal. La función `lda` daba el error
+de que las variables eran constantes. Para realizar el análisis discriminante lineal, se volvió a copiar y pegar dos veces las 34 filas haciendo algunos cambios
+para que las variables no fuesen colineales. En la primera tanda, se sumó a todos los valores numéricos 0'5 y a los valores más grande se les volvió a sumar un
+valor entre [0,0'5] para reflejar el mayor peso que tendrían en el análisis. En la segunda tanda, por su parte, se restó 0'5 y a los valores más pequeños se volvió
+a restar un valor entre [0,0'5]. Tras esto, tendríamos un archivo con los datos originales, junto con los datos sumados y restados. Ahora ya podemos hacer `lda`.
 
 Una vez hecho esto, calculamos la función discrimintante. 
 La función `lda` del paquete `MASS` realiza la clasificación:
@@ -600,6 +606,15 @@ La `proportion of trace` que imprime también es el porcentaje de separación co
 
 ### Caso cuadrático
 
+Igual que en el caso lineal no se pudo hacer `lda`, aquí tampoco se pudo hacer `qda`. En este caso, el error era que algún grupo era demasiado pequeño.
+Además en este caso, no encontramos ninguna manera de intentar añadir datos para intentar hacer `qda`. Mirando el código de la función `qda`, se exigía que
+cada clase de la variable PAIS tuviera como mínimo p+1 observaciones donde p es el número de variables. Creamos de nuevo un archivo que contuviera 
+estas p+1 observaciones por cada país pero la instrucción `qda` volvía a dar error. Ahora el error era que el rango era deficiente para un país en concreto.
+Buscamos el error en internet y pudimos encontrar que o se debía a algún error en el conjunto de datos o la información de los datos era insuficiente (algo que
+consideramos totalmente lógico debido a la modificación arbitraria de los datos por nuestra parte). Sin embargo, lo más peculiar era que la instrucció `qda` sí se
+ejecutaba correctamente si la fórmula que introducíamos era de una sola variable mientras que si la fórmula era la misma que la usada en `lda` provocaba un error.
+Por este motivo, no hemos podido realizar un análisis discriminante cuadrático ni su correspondiente validación.
+              
 ## *Validación de los clasificadores*
 
 Una vez construido el clasificador podemos clasficiar nuevos datos en función de sus medidas sin más que llamar a la función `predict`.
