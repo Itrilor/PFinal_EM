@@ -462,13 +462,13 @@ La función `fa()` implementa hasta 6 métodos distintos.
 Vamos a comprarar las salidas con el método del factor principal y con el de máxima verosimilitud.
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
-### prueba de dos modelos con 2 factores
+### prueba de dos modelos con 4 factores
 modelo1<-fa(poly_cor,
-            nfactors = 2,
+            nfactors = 4,
             rotate = "none",
             fm="mle") # modelo m?xima verosimilitud
 modelo2<-fa(poly_cor,
-            nfactors = 2,
+            nfactors = 4,
             rotate = "none",
             fm="minres") # modelo m?nimo residuo
 ```
@@ -521,7 +521,7 @@ En este diagrama, entre otras cosas, se ve que el primer factor está asociado c
 Otra forma de hacerlo es con un test de hipótesis al final que contrasta si el número de factores es suficiente:
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
-factanal(datos,factors=4, rotation="none")
+factanal(datos,factors=2, rotation="none")
 ```
 
 ## *Análisis de normalidad*
