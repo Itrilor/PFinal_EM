@@ -462,13 +462,13 @@ La función `fa()` implementa hasta 6 métodos distintos.
 Vamos a comprarar las salidas con el método del factor principal y con el de máxima verosimilitud.
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
-### prueba de dos modelos con tres factores
+### prueba de dos modelos con 2 factores
 modelo1<-fa(poly_cor,
-            nfactors = 4,
+            nfactors = 2,
             rotate = "none",
             fm="mle") # modelo m?xima verosimilitud
 modelo2<-fa(poly_cor,
-            nfactors = 4,
+            nfactors = 2,
             rotate = "none",
             fm="minres") # modelo m?nimo residuo
 ```
@@ -497,7 +497,7 @@ scree(poly_cor)
 fa.parallel(poly_cor,n.obs=200,fa="fa",fm="minres")
 ```
 
-Estimamos el modelo factorial con 4 factores implementando una rotación tipo varimax para buscar una interpretación más simple:
+Estimamos el modelo factorial con 2 factores implementando una rotación tipo varimax para buscar una interpretación más simple:
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 modelo_varimax<-fa(poly_cor,nfactors = 2,rotate = "varimax",
