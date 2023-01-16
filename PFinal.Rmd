@@ -275,8 +275,6 @@ aggregate(valor ~ variable, data = datos_tidy,
 Podemos observar que el p-valor es mayor que 0.05 solo para ZPOBURB, ZPSERVI, ZTEJERCI y ZTPOBACT por lo que son las únicas variables que siguen unas distribución normal.
   
 
-## *Otras cuestiones de interés*
-
 # **Análisis exploratorio multivariante**
 
 ## *Correlación*
@@ -336,7 +334,6 @@ ggplot(data = data.frame(varianza_explicada, pc = 1:11),
   geom_col(width = 0.3) +
   scale_y_continuous(limits = c(0,0.6)) + theme_bw() +
   labs(x = "Componente principal", y= " Proporción de varianza explicada")
-
 # Proporción de varianza explicada acumulada
 varianza_acum<-cumsum(varianza_explicada)
 ggplot( data = data.frame(varianza_acum, pc = 1:11),
@@ -640,7 +637,6 @@ La función `confusionmatrix` del paquete `biotools` realiza una validación cru
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 pred <- predict(modelo_lda, dimen = 1)
-
 confusionmatrix(datos_i$PAIS, pred$class)
 # Porcentaje de errores de clasificación
 training_error <- mean(datos_i$PAIS != pred$class) * 100
@@ -648,6 +644,4 @@ paste("trainig_error=", training_error, "%")
 ```
 
 En este caso, el porcentaje de aciertos es del 78.4313725490196%
-
-### Validación del clasificador cuadrático
 
