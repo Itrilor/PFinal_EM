@@ -258,8 +258,12 @@ qqline(datos$ZPOBDENS, col = 'blue', lwd=2)
 qqnorm(datos$ZPOBURB, main="ZPOBURB", pch=1, frame = FALSE)
 qqline(datos$ZPOBURB, col = 'blue', lwd=2)
 ```
+               
+Este análisis exploratorio puede darnos una idea de la posible distribución normal de las variables univariadas, pero siempre es mejor hacer los respectivos test de normalidad.
 
 ### Test de Saphiro-Wilk
+      
+Para ello haremos el test de Saphiro-Wilk que se usa para comprobar la normalidad de un conjunto de datos. En este caso, lo aplicaremos a cada variable.
 
 ```{r echo=TRUE, include=TRUE, warning=FALSE}
 datos_tidy <- melt(datos, value.name = "valor")
